@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>SWEN-343: Engineering of Enterprise Software Systems</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css"></head>
+    <body>
+        <header> </header>
+        <table class="banner">
+            <tbody>
+                <tr>
+                    <td> <a href="http://www.se.rit.edu" alt="Software Engineering Department">
+                        <img src="http://www.se.rit.edu/resources/images/se_logo.png" border="0"> </a> </td>
+                    <td>
+                        <h1>SWEN-343: Engineering of Enterprise Software Systems<br>
+                        </h1>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <img src="EC2.png"></img>
+    <h1>Crash Course on Amazon EC2</h1>
+    AWS EC2 (Elastic Compute Cloud) is Amazon's general computing platform that allows users to create virtual machines of
+    varying sizes and characteristics. Today we will explore two ways of creating instances for the purpose of running a web server or application.
+
+    <h2>Part 1: Creating a web server on EC2</h2>
+    <h3>Creating an instance</h3>
+    <ol>
+        <li>After logging into the AWS Dashboard, click on the EC2 link in the top left corner.</li>
+        <li>Under the "Create Instance" heading, click the <strong>Launch Instance</strong> button.</li>
+        <li>On the first page of the wizard, you will be asked to select a Amazon Machine Image (AMI). 
+            Amazon includes many popular operating systems and configurations but for our purposes, select the <strong>Amazon Linux AMI</strong>.</li>
+        <a href="select_ami.png"><img src="select_ami.png" /></a>
+        <li>On the next page, make sure <strong>t2.micro</strong> is selected for the instance type. 
+            This is the smallest instance type offered and is free to run one instance at a time. Click <strong>Configure Instance Details</strong> to continue.</li>
+        <a href="instance_type.png"><img src="instance_type.png" /></a>
+        <li>On the following screens, leave all settings on their default. Click next until you reach Step 6: Configure Security Group.
+            On this page, click <strong>Add Rule</strong> and set the Type of this rule to <strong>HTTP</strong>, leaving all other fields default. This will allow incoming HTTP
+            connections from the internet to our instance over port 80.</li>
+        <a href="security_group.png"><img src="security_group.png" /></a>
+        <li>After configuring the security group, click <string>Review and Launch</string> and then <strong>Launch</strong>.
+            A dialog will appear asking to assign a key pair to the instance. This will allow you to securely connect to the instance once created.
+            From the dropdown, select <strong>Create a key pair</strong> and give it a name. Click <strong>Download Key Pair</strong>. 
+            <br/><i>Important: Make sure you save your newly generated key pair in a safe place. This is your only change to download it!</i></li>
+        <a href="keypair.png"><img src="keypair.png" /></a>
+        <li>After downloading your key pair, click <strong>Launch Instance</strong>. A confirmation page will appear. Click <strong>View Instances</strong> to return to your instance list.</li>
+        <li>The instance will take a moment to be created, when it is ready, the Instance State will change to <i>running</i>.</li>
+    </ol>
+    <h3>Connecting to the instance</h3>
+        <ol>    
+            <li>Now we want to connect to our instance remotely. For this we will use SSH via the PuTTY client, which is installed on the lab machines. 
+                Unfortunately, PuTTY does not support .pem files like the key pair we downloaded for the instance. To convert it into a compatable format, open <strong>PuTTYgen</strong> another utility
+                available on your machine.</li>
+            <li>Under <strong>Type of key to generate</strong>, select <strong>SSH-2 RSA</strong>.</li>
+            <a href="puttygen-key-type.png"><img src="puttygen-key-type.png" /></a>
+            <li>Click <strong>Load</strong>. By default, PuTTYgen displays only files with the extension .ppk. To locate your .pem file, select the option to display files of all types.</li>
+            <a href="puttygen-load-key.png"><img src="puttygen-load-key.png" /></a>
+            <li>Click <strong>Save private key</strong> to save the key in the format that PuTTY can use. PuTTYgen displays a warning about saving the key without a passphrase. Click <strong>Yes</strong>.</li>
+            <li>Specify the same name for the key that you used for the key pair (for example, my-key-pair). PuTTY automatically adds the .ppk file extension.</li>
+            <li>Start <strong>PuTTY</strong>.</li>
+            <li>
+                In the Category pane, select <strong>Session</strong>Session and complete the following fields:
+                <ul>
+                    <li>In the Host Name box, enter <i>ec2-user@<span class="hl">public_dns_name</span></i> where public_dns_name is the address listed under the column of the same name on your instance.</li>
+                    <li>Under <strong>Connection type</strong>, select <strong>SSH</strong>.</li>
+                    <li>Ensure that <strong>Port</strong> is 22.</li>
+                </ul>
+            </li>
+            <a href="putty-session-config.png"><img src="putty-session-config.png" /></a>
+            <li>
+                In the Category pane, select <strong>Connection</strong>, expand <strong>SSH</strong>, and then select <strong>Auth</strong>. Complete the following:
+                <ul>
+                    <li>Click <strong>Browse</strong>.</li>
+                    <li>Select the .ppk file that you generated for your key pair, and then click <strong>Open</strong>.</li>
+                    <li>(Optional) If you plan to start this session again later, you can save the session information for future use. 
+                        Select <strong>Session</strong> in the <strong>Category</strong> tree, enter a name for the session in  <strong>Saved Sessions</strong>, and then click <strong>Save</strong>.</li>
+                    <li>Click <strong>Open</strong> to start the PuTTY session.</li>
+                </ul>
+            </li>
+            <a href="putty-auth-config.png"><img src="putty-auth-config.png" /></a>
+        </ol>
+    <h3>Installing a simple web server</h3>
+    For our example, we will install an Apache HTTP Server on our instance.
+    <ol>
+        <li>In the PuTTY command prompt window, type the following to install the Appache HTTP server:<br/>
+        <span class="code">sudo yum install httpd</span></li>
+        <li>After the installation is completed type the following statement to start Apache:<br/>
+        <span class="code">sudo /etc/init.d/httpd start</span></li>
+        <li>Go with your web browser to <strong>http://$YOUR-PUBLIC-DNS</strong>. You should see a page similar to the following:</li>
+        <a href="apache.png"><img src="apache.png" /></a>
+        <li>Congratulations! You have configured your first web server from scratch using Amazon EC2! <strong>Take a screenshot showing your instance list as well as the web server test page for submission</strong>.</li>
+        <li><span class="hl"><strong>IMPORTANT:</strong></span> Before moving on, make sure to shut down your instance so you do not accidentally incur any charges! 
+            If you do not plan on using this instance again, right click on it in the instance list, and under <strong>Instance State</strong> select <strong>Terminate</strong>. 
+            If you wish to restart it another time, select <strong>Stop</strong>.</li>
+    </ol>
+    
+    
+    <h2>Part 2: Deploying a web application using Elastic Beanstalk</h2>
+    Elastic Beanstalk is a <strong>PaaS</strong> offering from AWS that allows developers to automate the process of deploying their web applications on EC2 instances, RDS databases, and other services.
+    Beyond creating the instances on which the application will run, it also allows developers to manage the scaling and load balancing. Beanstalk can allocate more or less resources based on load.
+    We will use it to deploy a sample web application as a proof of concept.
+    <ol>
+        <li>From the AWS Dashboard, select the <strong>Elastic Beanstalk</strong> service. If you have't deployed an application before, you will see a welcome page. From the <strong>Platform</strong>
+        dropdown, select <strong>Tomcat</strong> and click <strong>Launch Now</strong>.</li>
+        <li>The environment will take a minute or two to initalize. While you wait, notice what resources are being created under the <strong>Recent Events</strong> table. 
+        All of these could be created by hand, but that would be infeasable for large scale application! ELB is one tool developers use to orchestrate these deployments.</li>
+        <li>When the environment has been successfully launched, the <strong>Health</strong> indicator should change to green. The web application we are going to deploy is a simple 
+        "Hello World" style program. It has been exported into a .war file which can be deployed on the Tomcat server. Download the application file <a href="hello_world_app.war">here</a>.</li>
+        <li>Click <strong>Upload and Deploy</strong>. In the dialog window, choose the <span class="code">hello_world_app.war</span> as the application to upload. 
+        Leave all other settings default and click <strong>Deploy</strong>.</li>
+        <li>After a few moments, the application should be deployed successfully and the current running version updated. To view the application, follow the URL listed in the header.</li>
+        <a href="elb_url.png"><img src="elb_url.png" /></a>
+        <li>Take a screenshot of the resulting application page for submission.</li>
+        <li><span class="hl"><strong>IMPORTANT:</strong></span> Before moving on, make sure to shut down your application so you do not accidentally incur any charges!<br/>
+        On the ELB environment page, click the <strong>Actions</strong> dropdown and select <strong>Terminate Environment</strong>. Click <strong>Terminate</strong> on the confirmation dialog.</li>
+    </ol>
+</body>
+</html>
